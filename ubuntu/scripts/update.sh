@@ -7,6 +7,26 @@ major_version="`echo $ubuntu_version | awk -F. '{print $1}'`";
 # Disable release-upgrades
 sed -i.bak 's/^Prompt=.*$/Prompt=never/' /etc/update-manager/release-upgrades;
 
+echo "修改源配置"
+sudo cp /etc/apt/sources.list /etc/apt/sources.list.bak
+cat > /etc/apt/sources.list << EOF
+
+deb http://mirrors.aliyun.com/ubuntu/ xenial main
+deb-src http://mirrors.aliyun.com/ubuntu/ xenial main
+deb http://mirrors.aliyun.com/ubuntu/ xenial-updates main
+deb-src http://mirrors.aliyun.com/ubuntu/ xenial-updates main
+deb http://mirrors.aliyun.com/ubuntu/ xenial universe
+deb-src http://mirrors.aliyun.com/ubuntu/ xenial universe
+deb http://mirrors.aliyun.com/ubuntu/ xenial-updates universe
+deb-src http://mirrors.aliyun.com/ubuntu/ xenial-updates universe
+deb http://mirrors.aliyun.com/ubuntu/ xenial-security main
+deb-src http://mirrors.aliyun.com/ubuntu/ xenial-security main
+deb http://mirrors.aliyun.com/ubuntu/ xenial-security universe
+deb-src http://mirrors.aliyun.com/ubuntu/ xenial-security universe
+
+EOF
+
+
 # Update the package list
 apt-get -y update;
 
@@ -36,3 +56,21 @@ apt-get -y purge unattended-upgrades;
 
 # Upgrade all installed packages incl. kernel and kernel headers
 apt-get -y dist-upgrade -o Dpkg::Options::="--force-confnew";
+
+echo "添加Docker源"
+
+sudo apt-get update
+sudo apt-get -y install apt-transport-https ca-certificates curl software-properties-common bash-completion
+sudo curl -fsSL http://mirrors.aliyun.com/docker-ce/linux/ubuntu/gpg | sudo apt-key add -
+sudo add-apt-repository "deb [arch=amd64] http://mirrors.aliyun.com/docker-ce/linux/ubuntu $(lsb_release -cs) stable"
+
+echo "安装Docker"
+export LANGUAGE=en_US.UTF-8
+export LANG=en_US.UTF-8
+export LC_ALL=en_US.UTF-8
+
+export docker_version=17.03.2
+sudo apt-get -y update
+version=$(apt-cache madison docker-ce|grep ${docker_version}|awk '{print $3}')
+sudo apt-get -y install docker-ce=${version} --allow-downgrades
+sudo systemctl enable docker
